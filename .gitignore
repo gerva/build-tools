@@ -6,3 +6,4 @@ tools
 .tox
 .coverage
 nosetests.xml
+lib/python/buildtools.egg-info
