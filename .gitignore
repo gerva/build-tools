@@ -3,3 +3,6 @@ master_config.json
 buildbot-configs
 buildbotcustom
 tools
+.tox
+.coverage
+nosetests.xml
