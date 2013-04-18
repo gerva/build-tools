@@ -7,4 +7,5 @@ tools
 .coverage
 coverage.xml
 nosetests.xml
+pep8.out
 lib/python/buildtools.egg-info
