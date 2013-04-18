@@ -10,9 +10,10 @@ import subprocess
 if __name__ == '__main__':
     report_file = 'pep8.out'
     log = open('pep8.out', 'w')
-    subprocess.Popen('pep8', stdout=log)
+    pep8 = subprocess.Popen('pep8', stdout=log)
     # ignoring exit code, jenkins generates
     # a report based on pep8.out
+    pep8.wait()
     log.close()
     print 'pep8 report available in: {0}'.format(report_file)
     sys.exit(0)
