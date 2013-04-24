@@ -332,19 +332,9 @@ class TestHg(unittest.TestCase):
     def testPurgeTrackedFile(self):
         clone(self.repodir, self.wc)
         fileToModify = os.path.join(self.wc, 'hello.txt')
-        import subprocess
-        print('********************************')
-        subprocess.Popen(['ls', '-lah', fileToModify])
         with open(fileToModify, 'w') as f:
             f.write('hello!')
-        subprocess.Popen(['cat', fileToModify])
-        subprocess.Popen(['echo'])
-        subprocess.Popen(['ls', '-lah', fileToModify])
         purge(self.wc)
-        subprocess.Popen(['ls', '-lah', fileToModify])
-        subprocess.Popen(['ls', '-lah', self.wc])
-        print('********************************')
-        subprocess.Popen(['ls', '-lah', fileToModify])
         with open(fileToModify, 'r') as f:
             content = f.read()
         self.assertEqual(content, 'hello!')
