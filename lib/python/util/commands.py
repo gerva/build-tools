@@ -8,11 +8,6 @@
 import subprocess
 import os
 import time
-import os
-import platform
-if os.name == 'nt':
-    import win32file
-    import win32api
 import logging
 log = logging.getLogger(__name__)
 
@@ -209,9 +204,18 @@ def remove_path(path):
             os.remove(full_name)
     os.rmdir(path)
 
+
 # _is_windows and _rmtree_windows taken
 # from mozharness
 def _is_windows():
+    import platform
+    try:
+        import win32file
+        import win32api
+    except ImportError:
+        # windows libraries are not available
+        # using default unix behaviour
+        return False
     system = platform.system()
     if system in ("Windows", "Microsoft"):
         return True
@@ -220,12 +224,15 @@ def _is_windows():
     if os.name == 'nt':
         return True
 
+
 def _rmtree_windows(path):
     """ Windows-specific rmtree that handles path lengths longer than MAX_PATH.
         Ported from clobberer.py.
     """
-    self.info("Using _rmtree_windows ...")
-    assert self._is_windows()
+    import win32file
+    import win32api
+    log.info("Using _rmtree_windows ...")
+    assert _is_windows()
     path = os.path.realpath(path)
     if not os.path.exists('\\\\?\\' + path):
         return
@@ -243,9 +250,8 @@ def _rmtree_windows(path):
         full_name = os.path.join(path, name)
 
         if file_attr & win32file.FILE_ATTRIBUTE_DIRECTORY:
-            self._rmtree_windows(full_name)
+            _rmtree_windows(full_name)
         else:
             win32file.SetFileAttributesW('\\\\?\\' + full_name, win32file.FILE_ATTRIBUTE_NORMAL)
             win32file.DeleteFile('\\\\?\\' + full_name)
     win32file.RemoveDirectory('\\\\?\\' + path)
-
