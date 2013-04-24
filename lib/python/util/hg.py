@@ -102,12 +102,13 @@ def hg_ver():
 def purge(dest):
     """Purge the repository of all untracked and ignored files."""
     try:
-        run_cmd(['hg', '--config', 'extensions.purge=', 'purge', '-a', '--all'], cwd=dest)
+        run_cmd(['hg', '--config', 'extensions.purge=', 'purge', '-a', '--all', dest])
     except subprocess.CalledProcessError:
         # purge failed
         # https://bugzilla.mozilla.org/show_bug.cgi?id=851270#c44
         log.error('purge failed (%s)' % dest)
-        raise
+        # trying to remove dest using
+        remove_path(dest)
 
 
 def update(dest, branch=None, revision=None):
