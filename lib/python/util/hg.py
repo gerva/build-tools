@@ -103,11 +103,9 @@ def purge(dest):
     """Purge the repository of all untracked and ignored files."""
     try:
         run_cmd(['hg', '--config', 'extensions.purge=', 'purge', '-a', '--all', dest])
-    except subprocess.CalledProcessError:
-        # purge failed (path too long?), trying to remove dest
-        log.error('purge failed (%s)' % dest)
-        remove_path(dest)
-
+    except subprocess.CalledProcessError as e:
+        log.debug('purge failed: %s' %e)
+        raise
 
 def update(dest, branch=None, revision=None):
     """Updates working copy `dest` to `branch` or `revision`.  If neither is
