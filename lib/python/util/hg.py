@@ -104,10 +104,8 @@ def purge(dest):
     try:
         run_cmd(['hg', '--config', 'extensions.purge=', 'purge', '-a', '--all', dest])
     except subprocess.CalledProcessError:
-        # purge failed
-        # https://bugzilla.mozilla.org/show_bug.cgi?id=851270#c44
+        # purge failed (path too long?), trying to remove dest
         log.error('purge failed (%s)' % dest)
-        # trying to remove dest using
         remove_path(dest)
 
 
