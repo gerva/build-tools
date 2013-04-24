@@ -324,7 +324,7 @@ class TestHg(unittest.TestCase):
         purge(self.wc)
         self.assertFalse(os.path.isdir(longPath))
 
-    def testPurgeOnACleanClone(self):
+    def testPurgeAFreshClone(self):
         clone(self.repodir, self.wc)
         purge(self.wc)
         self.assertTrue(os.path.exists(os.path.join(self.wc, 'hello.txt')))
