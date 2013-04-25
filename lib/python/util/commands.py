@@ -216,7 +216,7 @@ def remove_path(path):
 # _is_windows and _rmtree_windows taken
 # from mozharness
 
-def _is_windows(self):
+def _is_windows():
     system = platform.system()
     if system in ("Windows", "Microsoft"):
         return True
