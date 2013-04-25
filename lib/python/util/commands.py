@@ -8,9 +8,17 @@
 import subprocess
 import os
 import time
+import platform
 import logging
 log = logging.getLogger(__name__)
 
+if os.name == 'nt':
+    try:
+        import win32file
+        import win32api
+        PYWIN32 = True
+    except ImportError:
+        PYWIN32 = False
 
 def log_cmd(cmd, **kwargs):
     # cwd is special in that we always want it printed, even if it's not
@@ -207,15 +215,8 @@ def remove_path(path):
 
 # _is_windows and _rmtree_windows taken
 # from mozharness
-def _is_windows():
-    import platform
-    try:
-        import win32file
-        import win32api
-    except ImportError:
-        # windows libraries are not available
-        # using default unix behaviour
-        return False
+
+def _is_windows(self):
     system = platform.system()
     if system in ("Windows", "Microsoft"):
         return True
@@ -224,18 +225,21 @@ def _is_windows():
     if os.name == 'nt':
         return True
 
-
 def _rmtree_windows(path):
     """ Windows-specific rmtree that handles path lengths longer than MAX_PATH.
         Ported from clobberer.py.
     """
-    import win32file
-    import win32api
     log.info("Using _rmtree_windows ...")
     assert _is_windows()
     path = os.path.realpath(path)
-    if not os.path.exists('\\\\?\\' + path):
+    full_path = '\\\\?\\' + path
+    if not os.path.exists(full_path):
         return
+    if not PYWIN32:
+        if not os.path.isdir(path):
+            return run_cmd('del /F /Q "%s"' % path)
+        else:
+            return run_cmd('rmdir /S /Q "%s"' % path)
     # Make sure directory is writable
     win32file.SetFileAttributesW('\\\\?\\' + path, win32file.FILE_ATTRIBUTE_NORMAL)
     # Since we call rmtree() with a file, sometimes
