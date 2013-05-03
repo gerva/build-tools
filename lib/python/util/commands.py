@@ -6,13 +6,12 @@ import platform
 import logging
 log = logging.getLogger(__name__)
 
-if os.name == 'nt':
-    try:
-        import win32file
-        import win32api
-        PYWIN32 = True
-    except ImportError:
-        PYWIN32 = False
+try:
+    import win32file
+    import win32api
+    PYWIN32 = True
+except ImportError:
+    PYWIN32 = False
 
 def log_cmd(cmd, **kwargs):
     # cwd is special in that we always want it printed, even if it's not
