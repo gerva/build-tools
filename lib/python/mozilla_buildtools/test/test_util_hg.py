@@ -308,7 +308,7 @@ class TestHg(unittest.TestCase):
 
     def testPurgeUntrackedDirectory(self):
         clone(self.repodir, self.wc)
-        directoryToPurge = os.path.join(self.wc, 'directoyTopurge')
+        directoryToPurge = os.path.join(self.wc, 'directoryTopurge')
         os.makedirs(directoryToPurge)
         purge(directoryToPurge)
         self.assertFalse(os.path.isdir(directoryToPurge))
