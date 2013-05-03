@@ -102,7 +102,8 @@ def hg_ver():
 def purge(dest):
     """Purge the repository of all untracked and ignored files."""
     try:
-        run_cmd(['hg', '--config', 'extensions.purge=', 'purge', '-a', '--all', dest])
+        run_cmd(['hg', '--config', 'extensions.purge=', 'purge', '-a', '--all',
+                  dest], cwd=os.path.normpath(os.path.join(dest, '..')))
     except subprocess.CalledProcessError as e:
         log.debug('purge failed: %s' %e)
         raise
