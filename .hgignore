@@ -25,3 +25,4 @@ SQLAlchemy-*
 virtualenv-*
 py-*
 argparse-*
+pep8.out
