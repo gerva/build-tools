@@ -3,9 +3,14 @@ master_config.json
 buildbot-configs
 buildbotcustom
 tools
-.tox
 .coverage
+.tox
 coverage.xml
+lib/python/buildtools.egg-info/
 nosetests.xml
-pep8.out
-lib/python/buildtools.egg-info
+simplejson-*
+tox-*
+SQLAlchemy-*
+virtualenv-*
+py-*
+argparse-*

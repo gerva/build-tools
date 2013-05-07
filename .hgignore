@@ -19,4 +19,9 @@ lib/python/slavealloc/www/js/bugzilla.js
 coverage.xml
 lib/python/buildtools.egg-info/
 nosetests.xml
-
+simplejson-*
+tox-*
+SQLAlchemy-*
+virtualenv-*
+py-*
+argparse-*
