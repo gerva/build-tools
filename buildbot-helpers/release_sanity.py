@@ -36,6 +36,7 @@ site.addsitedir(path.join(path.dirname(__file__), "../lib/python"))
 from util.file import compare
 from util.hg import make_hg_url, mercurial, update
 from release.info import readReleaseConfig, getRepoMatchingBranch
+from release.paths import makeCandidatesDir, makeReleasesDir
 from release.versions import getL10nDashboardVersion
 from release.l10n import getShippedLocales
 from release.platforms import getLocaleListFromShippedLocales
@@ -221,6 +222,27 @@ def verify_options(cmd_options, config):
             log.error("masters json file is required when not skipping reconfig")
             success = False
             error_tally.add('masters_json_file')
+    return success
+
+
+def verify_partial(product, branch, version, build, protocol='http',
+                   server='ftp.mozilla.org'):
+
+    url = makeReleasesDir(product, version, protocol, server)
+    if 'beta' in branch:
+        url = makeCandidatesDir(product, version, build,
+                                protocol=protocol, server=server)
+    partial_name = "{0} build {1}".format(version, build)
+    log.info("Checking for existence of {0} partials...".format(partial_name))
+    success = True
+    try:
+        partials_page = urllib2.urlopen(url)
+        log.info("Got: {0} !".format(partials_page.geturl()))
+    except urllib2.HTTPError:
+        log.error("Partial update does not exist with required revision."
+                  " Check again, or use -b to bypass")
+        success = False
+        error_tally.add('verify_partial')
     return success
 
 
@@ -467,6 +489,15 @@ if __name__ == '__main__':
                                    branchConfig['hghost']):
                     test_success = False
                     log.error("Error verifying repos")
+
+            # check partial updates
+            partial_keys = [k for k in ('partialUpdates', 'extraPartials') if k in releaseConfig]
+            for key in partial_keys:
+                for version in releaseConfig[key]:
+                    product = releaseConfig['productName']
+                    branch = options.branch
+                    build_number = releaseConfig[key][version]['buildNumber']
+                    verify_partial(product, branch, version, build_number)
 
     if test_success:
         if not options.dryrun:
