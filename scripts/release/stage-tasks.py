@@ -193,6 +193,8 @@ def deleteIndexFiles(cleanup_dir, stageServer, stageUsername,
 
 def updateSymlink(productName, version, stageServer, stageUsername,
                   stageSshKey, target):
+    push_to_mirrors_dir = '%s/releases/%s' % (productName, version)
+    run_remote_cmd('[ -d %s ]' % push_to_mirrors_dir)
     releases_dir = makeReleasesDir(productName)
 
     run_remote_cmd([
