@@ -193,8 +193,20 @@ def deleteIndexFiles(cleanup_dir, stageServer, stageUsername,
 
 def updateSymlink(productName, version, stageServer, stageUsername,
                   stageSshKey, target):
+    # step 1 check if push to mirror succeded
+    # push tot mirrors directory
     push_to_mirrors_dir = '%s/releases/%s' % (productName, version)
-    run_remote_cmd('[ -d %s ]' % push_to_mirrors_dir)
+    try:
+        # check if the remote dir exists
+        run_remote_cmd('test -d %s' % push_to_mirrors_dir,
+                       server=stageServer, username=stageUsername,
+                       sshKey=stageSshKey)
+    except CalledProcessError:
+            log.warning('WARN: push to mirrors directory does not exists (%s)',
+                        push_to_mirrors_dir)
+            log.warning('WARN: did you push to mirrors before running post release?')
+            raise
+
     releases_dir = makeReleasesDir(productName)
 
     run_remote_cmd([
