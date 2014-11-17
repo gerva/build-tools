@@ -6,5 +6,4 @@ share =
 transplant =
 
 [ui]
-username = Travis McTravis <travis@localhost.localdomain>
-
+username = tester <tester@example.com>
