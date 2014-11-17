@@ -54,10 +54,6 @@ class TestGit(unittest.TestCase):
         if 'GIT_SHARE_BASE_DIR' in os.environ:
             del os.environ['GIT_SHARE_BASE_DIR']
 
-        # tox on travis needs it
-        os.environ['GIT_CONFIG'] = os.path.join(os.path.dirname(__file__),
-                                                "gitconfig")
-
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
         os.chdir(self.pwd)

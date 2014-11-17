@@ -2,6 +2,10 @@ language: python
 python:
   - "2.7"
 
+before_script:
+  - git config --global user.email "travis@travis-ci.org"
+  - git config --global user.name "Travis McTravis"
+
 install:
   - "pip install tox"
 
