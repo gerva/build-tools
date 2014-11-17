@@ -5,6 +5,12 @@ python:
 before_script:
   - git config --global user.email "travis@travis-ci.org"
   - git config --global user.name "Travis McTravis"
+  - hg --config ui.username=Travis McTravis <travis@travis-ci.org>
+  - hg --config extensions.mq=
+  - hg --config extensions.purge=
+  - hg --config extensions.rebase=
+  - hg --config extensions.share=
+  - hg --config extensions.transplant=
 
 install:
   - "pip install tox"
