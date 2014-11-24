@@ -7,7 +7,7 @@ from urlparse import urlsplit
 from ConfigParser import RawConfigParser
 
 from util.commands import run_cmd, get_output, remove_path
-from util.commands import get_output_and_poll, terminate_on_timeout
+from util.commands import terminate_on_timeout, poll_and_get_output
 from util.retry import retry, retrier
 
 import logging
@@ -103,7 +103,7 @@ def get_hg_out_and_poll(cmd, warning_interval=7200, poll_interval=0.25,
     else:
         env = {}
     env['HGPLAIN'] = '1'
-    return get_output_and_poll(['hg'] + cmd,
+    return poll_and_get_output(['hg'] + cmd,
                                warning_interval=warning_interval,
                                poll_interval=poll_interval,
                                warning_callback=warning_callback,
