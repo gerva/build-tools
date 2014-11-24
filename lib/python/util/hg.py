@@ -7,7 +7,7 @@ from urlparse import urlsplit
 from ConfigParser import RawConfigParser
 
 from util.commands import run_cmd, get_output, remove_path
-from util.commands import poll_and_get_output
+from util.commands import get_output_and_terminate_on_timeout
 from util.retry import retry, retrier
 
 import logging
@@ -87,8 +87,8 @@ def get_hg_output(cmd, **kwargs):
     return get_output(['hg'] + cmd, env=env, **kwargs)
 
 
-def poll_and_get_hg_output(cmd, timeout=7200, poll_interval=0.25,
-                           **kwargs):
+def hg_terminate_on_timeout(cmd, timeout=7200, poll_interval=0.25,
+                            **kwargs):
     """
     Runs hg with the given arguments and sets HGPLAIN in the environment to
     enforce consistent output.
@@ -104,11 +104,9 @@ def poll_and_get_hg_output(cmd, timeout=7200, poll_interval=0.25,
     else:
         env = {}
     env['HGPLAIN'] = '1'
-    return poll_and_get_output(['hg'] + cmd,
-                               timeout=timeout,
-                               poll_interval=poll_interval,
-                               env=env,
-                               **kwargs)
+    return get_output_and_terminate_on_timeout(['hg'] + cmd, timeout=timeout,
+                                               poll_interval=poll_interval,
+                                               env=env, **kwargs)
 
 
 def get_revision(path):
@@ -278,10 +276,10 @@ def clone(repo, dest, branch=None, revision=None, update_dest=True,
     exc = None
     for _ in retrier(attempts=RETRY_ATTEMPTS):
         try:
-            print "about to call poll_and_get_hg_output"
-            poll_and_get_hg_output(cmd=cmd, include_stderr=True,
-                                   timeout=timeout,
-                                   poll_interval=poll_interval)
+            print "about to call hg_terminate_on_timeout"
+            hg_terminate_on_timeout(cmd=cmd, include_stderr=True,
+                                    timeout=timeout,
+                                    poll_interval=poll_interval)
 
             break
         except subprocess.CalledProcessError, e:

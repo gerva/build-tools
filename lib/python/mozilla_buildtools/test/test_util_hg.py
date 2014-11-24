@@ -1165,7 +1165,7 @@ class TestHg(unittest.TestCase):
                 return get_hg_output(cmd, **kwargs)
 
         # Two retries are forced in setUp() above
-        with patch('util.hg.poll_and_get_hg_output', new=_my_get_hg_output):
+        with patch('util.hg.hg_terminate_on_timeout', new=_my_get_hg_output):
             self.assertRaises(subprocess.CalledProcessError,
                               clone, "http://nxdomain.nxnx", self.wc)
             self.assertEquals(num_calls, [2])

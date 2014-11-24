@@ -163,12 +163,10 @@ def get_output(cmd, include_stderr=False, dont_log=False, **kwargs):
         log.info("command: END (%.2f elapsed)\n", elapsed)
 
 
-def poll_and_get_output(cmd, include_stderr=False, dont_log=False,
-                        timeout=7200, poll_interval=0.25, **kwargs):
-    """Pour the run_cmd_periodic_poll and get_output into a cocktail shaker
-    filled with ice. Shake well. Strain into a chilled cocktail glass.
-    Garnish with a cherry.
-    Run cmd (a list of arguments) in a subprocess and check its completion
+def get_output_and_terminate_on_timeout(cmd, include_stderr=False,
+                                        dont_log=False, timeout=7200,
+                                        poll_interval=0.25, **kwargs):
+    """Run cmd (a list of arguments) in a subprocess and check its completion
     periodically and returns the output.  If include_stderr
     is set, stderr will be included in the output, otherwise it will be sent to
     the caller's stderr stream.
