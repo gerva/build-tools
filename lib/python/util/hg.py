@@ -7,7 +7,7 @@ from urlparse import urlsplit
 from ConfigParser import RawConfigParser
 
 from util.commands import run_cmd, get_output, remove_path
-from util.commands import terminate_on_timeout, poll_and_get_output
+from util.commands import poll_and_get_output
 from util.retry import retry, retrier
 
 import logging
@@ -186,7 +186,8 @@ def update(dest, branch=None, revision=None):
 
 
 def clone(repo, dest, branch=None, revision=None, update_dest=True,
-          clone_by_rev=False, mirrors=None, bundles=None):
+          clone_by_rev=False, mirrors=None, bundles=None, warning_interval=7200,
+          poll_interval=0.25, warning_callback=None):
     """Clones hg repo and places it at `dest`, replacing whatever else is
     there.  The working copy will be empty.
 
@@ -271,9 +272,9 @@ def clone(repo, dest, branch=None, revision=None, update_dest=True,
     for _ in retrier(attempts=RETRY_ATTEMPTS):
         try:
             poll_and_get_hg_output(cmd=cmd, include_stderr=False,
-                                   warning_interval=3600,
-                                   poll_interval=0.25,
-                                   warning_callback=terminate_on_timeout)
+                                   warning_interval=warning_interval,
+                                   poll_interval=poll_interval,
+                                   warning_callback=warning_callback)
             break
         except subprocess.CalledProcessError, e:
             exc = sys.exc_info()
