@@ -208,9 +208,10 @@ def clone(repo, dest, branch=None, revision=None, update_dest=True,
     Regardless of how the repository ends up being cloned, the 'default' path
     will point to `repo`.
 
-    `warning_callback` defaults to terminate_on_timeout, it stops the clone
-    process if it takes more `timeout`. If clone it's wrapped into a
-    retry, this will trigger another clone attempt.
+    If this function runs for more than `timeout` seconds, the hg clone
+    subprocess will be terminated. This features allows to terminate hung clones
+    before buildbot kills the full jobs. When a timeout terminates the process,
+    the exception is caught by `retrier`.
 
     `poll_interval` determines how frequently the hg clone process is polled.
     """
