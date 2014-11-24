@@ -7,6 +7,7 @@ from urlparse import urlsplit
 from ConfigParser import RawConfigParser
 
 from util.commands import run_cmd, get_output, remove_path
+from util.commands import get_output_and_poll, terminate_on_timeout
 from util.retry import retry, retrier
 
 import logging
@@ -83,6 +84,31 @@ def get_hg_output(cmd, **kwargs):
         env = {}
     env['HGPLAIN'] = '1'
     return get_output(['hg'] + cmd, env=env, **kwargs)
+
+
+def get_hg_out_and_poll(cmd, warning_interval=7200, poll_interval=0.25,
+                        warning_callback=None, **kwargs):
+    """
+    Runs hg with the given arguments and sets HGPLAIN in the environment to
+    enforce consistent output.
+    Equivalent to:
+        env = {}
+        env['HGPLAIN'] = '1'
+        return get_output(['hg'] + cmd, env=env, **kwargs)
+    polls the output of the command periodically
+    """
+    if 'env' in kwargs:
+        env = kwargs['env']
+        del kwargs['env']
+    else:
+        env = {}
+    env['HGPLAIN'] = '1'
+    return get_output_and_poll(['hg'] + cmd,
+                               warning_interval=warning_interval,
+                               poll_interval=poll_interval,
+                               warning_callback=warning_callback,
+                               env=env,
+                               **kwargs)
 
 
 def get_revision(path):
@@ -244,7 +270,10 @@ def clone(repo, dest, branch=None, revision=None, update_dest=True,
     exc = None
     for _ in retrier(attempts=RETRY_ATTEMPTS):
         try:
-            get_hg_output(cmd=cmd, include_stderr=True)
+            get_hg_out_and_poll(cmd=cmd, include_stderr=False,
+                                warning_interval=3600,
+                                poll_interval=0.25,
+                                warning_callback=terminate_on_timeout)
             break
         except subprocess.CalledProcessError, e:
             exc = sys.exc_info()

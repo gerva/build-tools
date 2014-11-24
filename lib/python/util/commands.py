@@ -163,6 +163,77 @@ def get_output(cmd, include_stderr=False, dont_log=False, **kwargs):
         log.info("command: END (%.2f elapsed)\n", elapsed)
 
 
+def pull_and_get_output(cmd, include_stderr=False, dont_log=False,
+                        warning_interval=300, poll_interval=0.25,
+                        warning_callback=None, **kwargs):
+    """Pour the run_cmd_periodic_poll and get_output into a cocktail shaker
+    filled with ice. Shake well. Strain into a chilled cocktail glass.
+    Garnish with a cherry.
+    Run cmd (a list of arguments) in a subprocess and check its completion
+    periodically and returns the output.  If include_stderr
+    is set, stderr will be included in the output, otherwise it will be sent to
+    the caller's stderr stream.
+
+    Warning that you shouldn't use this function to capture a large amount of
+    output (> a few thousand bytes), it will deadlock.
+    Raise subprocess.CalledProcessError if the command exits
+    with non-zero.  If the command returns successfully, return 0.
+    warning_callback function will be called with the following arguments if the
+    command's execution takes longer then warning_interval:
+        start_time, elapsed, proc
+    """
+    if include_stderr:
+        stderr = subprocess.STDOUT
+    else:
+        stderr = None
+
+    log_cmd(cmd, **kwargs)
+    if 'env' in kwargs:
+        kwargs['env'] = merge_env(kwargs['env'])
+
+    output = []
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, **kwargs)
+    start_time = time.time()
+    last_check = start_time
+
+    while True:
+        rc = proc.poll()
+        output.append(proc.stdout.read())
+        if rc is not None:
+            log.debug("Process returned %s", rc)
+            output = "".join(output)
+            if rc == 0:
+                elapsed = time.time() - start_time
+                log.info("command: END (%.2fs elapsed)\n", elapsed)
+                if not dont_log:
+                    log.info("command: output:")
+                    log.info(output)
+                return output
+            else:
+                raise subprocess.CalledProcessError(proc.returncode, cmd, output=output)
+
+        now = time.time()
+        if now - last_check > warning_interval:
+            # reset last_check to avoid spamming callback
+            last_check = now
+            elapsed = now - start_time
+            if warning_callback:
+                log.debug("Calling warning_callback function: %s(%s)" %
+                          (warning_callback, start_time))
+                try:
+                    warning_callback(start_time, elapsed, proc)
+                except Exception:
+                    log.error("Callback raised an exception, ignoring...",
+                              exc_info=True)
+            else:
+                log.warning("Command execution is taking longer than"
+                            "warning_interval (%d)"
+                            ", executing warning_callback"
+                            "Started at: %s, elapsed: %.2fs" % (warning_interval,
+                                                                start_time,
+                                                                elapsed))
+
+
 def remove_path(path):
     """This is a replacement for shutil.rmtree that works better under
     windows. Thanks to Bear at the OSAF for the code.
@@ -254,3 +325,11 @@ def _rmtree_windows(path):
             win32file.SetFileAttributesW('\\\\?\\' + full_name, win32file.FILE_ATTRIBUTE_NORMAL)
             win32file.DeleteFile('\\\\?\\' + full_name)
     win32file.RemoveDirectory('\\\\?\\' + path)
+
+
+def terminate_on_timeout(start_time, elapsed, proc):
+    """a callback to use with run_cmd_periodic_poll, that terminates the process
+       after a given timeout"""
+    log.debug("operation timeout after %s seconds)" % (str(elapsed)))
+    log.debug("terminating %s" % (proc))
+    proc.terminate()
