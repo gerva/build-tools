@@ -1169,3 +1169,8 @@ class TestHg(unittest.TestCase):
             self.assertRaises(subprocess.CalledProcessError,
                               clone, "http://nxdomain.nxnx", self.wc)
             self.assertEquals(num_calls, [2])
+
+    def testCloneTimeout(self):
+        # try a super fast clone
+        self.assertRaises(subprocess.CalledProcessError, clone, self.repodir,
+                          self.wc, timeout=0.01, poll_interval=0.05)
