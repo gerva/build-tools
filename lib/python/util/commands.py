@@ -164,7 +164,7 @@ def get_output(cmd, include_stderr=False, dont_log=False, **kwargs):
 
 
 def poll_and_get_output(cmd, include_stderr=False, dont_log=False,
-                        warning_interval=300, poll_interval=0.25,
+                        warning_interval=7200, poll_interval=0.25,
                         warning_callback=None, **kwargs):
     """Pour the run_cmd_periodic_poll and get_output into a cocktail shaker
     filled with ice. Shake well. Strain into a chilled cocktail glass.

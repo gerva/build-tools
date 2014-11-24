@@ -7,7 +7,7 @@ from urlparse import urlsplit
 from ConfigParser import RawConfigParser
 
 from util.commands import run_cmd, get_output, remove_path
-from util.commands import poll_and_get_output
+from util.commands import poll_and_get_output, terminate_on_timeout
 from util.retry import retry, retrier
 
 import logging
@@ -187,7 +187,7 @@ def update(dest, branch=None, revision=None):
 
 def clone(repo, dest, branch=None, revision=None, update_dest=True,
           clone_by_rev=False, mirrors=None, bundles=None, warning_interval=7200,
-          poll_interval=0.25, warning_callback=None):
+          poll_interval=0.25, warning_callback=terminate_on_timeout):
     """Clones hg repo and places it at `dest`, replacing whatever else is
     there.  The working copy will be empty.
 
@@ -208,11 +208,11 @@ def clone(repo, dest, branch=None, revision=None, update_dest=True,
     Regardless of how the repository ends up being cloned, the 'default' path
     will point to `repo`.
 
-    if a `warning_callback` is defined, this function will be called after
-    `warning_interval` seconds. This can be used to terminate the process or
-    execute specifics commands.
+    `warning_callback` defaults to terminate_on_timeout, it stops the clone
+    process if it takes more `warning_interval`. If clone it's wrapped into a
+    retry, this will trigger another clone attempt.
 
-    `poll_interval` determines how frequently the process is polled.
+    `poll_interval` determines how frequently the hg clone process is polled.
     """
     if os.path.exists(dest):
         remove_path(dest)
