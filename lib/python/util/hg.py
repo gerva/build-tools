@@ -276,7 +276,6 @@ def clone(repo, dest, branch=None, revision=None, update_dest=True,
     exc = None
     for _ in retrier(attempts=RETRY_ATTEMPTS):
         try:
-            print "about to call hg_terminate_on_timeout"
             hg_terminate_on_timeout(cmd=cmd, include_stderr=True,
                                     timeout=timeout,
                                     poll_interval=poll_interval)
