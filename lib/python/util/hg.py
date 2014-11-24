@@ -86,8 +86,8 @@ def get_hg_output(cmd, **kwargs):
     return get_output(['hg'] + cmd, env=env, **kwargs)
 
 
-def get_hg_out_and_poll(cmd, warning_interval=7200, poll_interval=0.25,
-                        warning_callback=None, **kwargs):
+def poll_and_get_hg_output(cmd, warning_interval=7200, poll_interval=0.25,
+                           warning_callback=None, **kwargs):
     """
     Runs hg with the given arguments and sets HGPLAIN in the environment to
     enforce consistent output.
@@ -270,10 +270,10 @@ def clone(repo, dest, branch=None, revision=None, update_dest=True,
     exc = None
     for _ in retrier(attempts=RETRY_ATTEMPTS):
         try:
-            get_hg_out_and_poll(cmd=cmd, include_stderr=False,
-                                warning_interval=3600,
-                                poll_interval=0.25,
-                                warning_callback=terminate_on_timeout)
+            poll_and_get_hg_output(cmd=cmd, include_stderr=False,
+                                   warning_interval=3600,
+                                   poll_interval=0.25,
+                                   warning_callback=terminate_on_timeout)
             break
         except subprocess.CalledProcessError, e:
             exc = sys.exc_info()
