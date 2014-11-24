@@ -207,6 +207,12 @@ def clone(repo, dest, branch=None, revision=None, update_dest=True,
 
     Regardless of how the repository ends up being cloned, the 'default' path
     will point to `repo`.
+
+    if a `warning_callback` is defined, this function will be called after
+    `warning_interval` seconds. This can be used to terminate the process or
+    execute specifics commands.
+
+    `poll_interval` determines how frequently the process is polled.
     """
     if os.path.exists(dest):
         remove_path(dest)
