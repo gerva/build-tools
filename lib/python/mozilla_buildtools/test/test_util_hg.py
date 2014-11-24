@@ -1171,6 +1171,9 @@ class TestHg(unittest.TestCase):
             self.assertEquals(num_calls, [2])
 
     def testCloneTimeout(self):
-        # try a super fast clone
+        # clone the hg repository with a very low timeout (0.01 seconds).
+        # The operation will be interrupted by the timeout. Retry should
+        # intercept the failure and re-start the clone a few times but,
+        # at the end, the clone must fail.
         self.assertRaises(subprocess.CalledProcessError, clone, self.repodir,
                           self.wc, timeout=0.01, poll_interval=0.05)
