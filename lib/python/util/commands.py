@@ -164,8 +164,7 @@ def get_output(cmd, include_stderr=False, dont_log=False, **kwargs):
 
 
 def poll_and_get_output(cmd, include_stderr=False, dont_log=False,
-                        warning_interval=7200, poll_interval=0.25,
-                        warning_callback=None, **kwargs):
+                        timeout=7200, poll_interval=0.25, **kwargs):
     """Pour the run_cmd_periodic_poll and get_output into a cocktail shaker
     filled with ice. Shake well. Strain into a chilled cocktail glass.
     Garnish with a cherry.
@@ -194,14 +193,14 @@ def poll_and_get_output(cmd, include_stderr=False, dont_log=False,
     output = []
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, **kwargs)
     start_time = time.time()
-    last_check = start_time
 
     while True:
         rc = proc.poll()
-        output.append(proc.stdout.read())
         if rc is not None:
+            # proc.stdout.read() is a blocking operation but if we are here,
+            # proc has already finished.
+            output = proc.stdout.read()
             log.debug("Process returned %s", rc)
-            output = "".join(output)
             if rc == 0:
                 elapsed = time.time() - start_time
                 log.info("command: END (%.2fs elapsed)\n", elapsed)
@@ -213,25 +212,14 @@ def poll_and_get_output(cmd, include_stderr=False, dont_log=False,
                 raise subprocess.CalledProcessError(proc.returncode, cmd, output=output)
 
         now = time.time()
-        if now - last_check > warning_interval:
-            # reset last_check to avoid spamming callback
-            last_check = now
+        if now - start_time > timeout:
             elapsed = now - start_time
-            if warning_callback:
-                log.debug("Calling warning_callback function: %s(%s)" %
-                          (warning_callback, start_time))
-                try:
-                    warning_callback(start_time, elapsed, proc)
-                except Exception:
-                    log.error("Callback raised an exception, ignoring...",
-                              exc_info=True)
-            else:
-                log.warning("Command execution is taking longer than"
-                            "warning_interval (%d)"
-                            ", executing warning_callback"
-                            "Started at: %s, elapsed: %.2fs" % (warning_interval,
-                                                                start_time,
-                                                                elapsed))
+            log.info("clone process, is taking too long: %ss (timeout %s). Terminating" %
+                     (now - start_time, timeout))
+            proc.terminate()
+            proc.wait()
+            raise subprocess.CalledProcessError(proc.returncode, cmd,
+                                                output='timeout, process terminated')
 
 
 def remove_path(path):
@@ -325,11 +313,3 @@ def _rmtree_windows(path):
             win32file.SetFileAttributesW('\\\\?\\' + full_name, win32file.FILE_ATTRIBUTE_NORMAL)
             win32file.DeleteFile('\\\\?\\' + full_name)
     win32file.RemoveDirectory('\\\\?\\' + path)
-
-
-def terminate_on_timeout(start_time, elapsed, proc):
-    """a callback to use with run_cmd_periodic_poll, that terminates the process
-       after a given timeout"""
-    log.debug("operation timeout after %s seconds)" % (str(elapsed)))
-    log.debug("terminating %s" % (proc))
-    proc.terminate()

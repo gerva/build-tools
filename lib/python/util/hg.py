@@ -7,7 +7,7 @@ from urlparse import urlsplit
 from ConfigParser import RawConfigParser
 
 from util.commands import run_cmd, get_output, remove_path
-from util.commands import poll_and_get_output, terminate_on_timeout
+from util.commands import poll_and_get_output
 from util.retry import retry, retrier
 
 import logging
@@ -17,6 +17,7 @@ log = logging.getLogger(__name__)
 TRANSIENT_HG_ERRORS = (
     'error: Name or service not known',
     'HTTP Error 5',
+    'timeout, process terminated',
 )
 
 RETRY_ATTEMPTS = 3
@@ -86,8 +87,8 @@ def get_hg_output(cmd, **kwargs):
     return get_output(['hg'] + cmd, env=env, **kwargs)
 
 
-def poll_and_get_hg_output(cmd, warning_interval=7200, poll_interval=0.25,
-                           warning_callback=None, **kwargs):
+def poll_and_get_hg_output(cmd, timeout=7200, poll_interval=0.25,
+                           **kwargs):
     """
     Runs hg with the given arguments and sets HGPLAIN in the environment to
     enforce consistent output.
@@ -104,9 +105,8 @@ def poll_and_get_hg_output(cmd, warning_interval=7200, poll_interval=0.25,
         env = {}
     env['HGPLAIN'] = '1'
     return poll_and_get_output(['hg'] + cmd,
-                               warning_interval=warning_interval,
+                               timeout=timeout,
                                poll_interval=poll_interval,
-                               warning_callback=warning_callback,
                                env=env,
                                **kwargs)
 
@@ -186,8 +186,8 @@ def update(dest, branch=None, revision=None):
 
 
 def clone(repo, dest, branch=None, revision=None, update_dest=True,
-          clone_by_rev=False, mirrors=None, bundles=None, warning_interval=7200,
-          poll_interval=0.25, warning_callback=terminate_on_timeout):
+          clone_by_rev=False, mirrors=None, bundles=None, timeout=7200,
+          poll_interval=0.25):
     """Clones hg repo and places it at `dest`, replacing whatever else is
     there.  The working copy will be empty.
 
@@ -209,7 +209,7 @@ def clone(repo, dest, branch=None, revision=None, update_dest=True,
     will point to `repo`.
 
     `warning_callback` defaults to terminate_on_timeout, it stops the clone
-    process if it takes more `warning_interval`. If clone it's wrapped into a
+    process if it takes more `timeout`. If clone it's wrapped into a
     retry, this will trigger another clone attempt.
 
     `poll_interval` determines how frequently the hg clone process is polled.
@@ -277,10 +277,11 @@ def clone(repo, dest, branch=None, revision=None, update_dest=True,
     exc = None
     for _ in retrier(attempts=RETRY_ATTEMPTS):
         try:
-            poll_and_get_hg_output(cmd=cmd, include_stderr=False,
-                                   warning_interval=warning_interval,
-                                   poll_interval=poll_interval,
-                                   warning_callback=warning_callback)
+            print "about to call poll_and_get_hg_output"
+            poll_and_get_hg_output(cmd=cmd, include_stderr=True,
+                                   timeout=timeout,
+                                   poll_interval=poll_interval)
+
             break
         except subprocess.CalledProcessError, e:
             exc = sys.exc_info()
