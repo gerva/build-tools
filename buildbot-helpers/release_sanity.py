@@ -535,7 +535,6 @@ if __name__ == '__main__':
             if 'extraUpdates' in releaseConfig:
                 partials.extend(releaseConfig['extraUpdated'])
             product = releaseConfig['productName']
-            branch = options.branch
             platforms = releaseConfig['enUSPlatforms']
             if partials:
                 for partial in partials:
