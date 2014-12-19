@@ -38,6 +38,7 @@ from util.file import compare
 from util.hg import make_hg_url, mercurial, update
 from release.info import readReleaseConfig, getRepoMatchingBranch
 from release.paths import makeCandidatesDir, makeReleasesDir
+from release.platforms import buildbot2ftp
 from release.versions import getL10nDashboardVersion
 from release.l10n import getShippedLocales
 from release.platforms import getLocaleListFromShippedLocales
@@ -536,15 +537,16 @@ if __name__ == '__main__':
             product = releaseConfig['productName']
             branch = options.branch
             platforms = releaseConfig['enUSPlatforms']
-            for partial in partials:
-                build_number = partials[partial]['buildNumber']
-                # when bug 839926 lands, buildNumber must be None for releases
-                # but it might have a value for betas (beta *might* use
-                # unreleased builds see bug 1091694 c2)
-                if not verify_partial(product, branch, partial,
-                                      build_number):
-                    test_success = False
-                    log.error("Error verifying partials")
+            if partials:
+                for partial in partials:
+                    build_number = partials[partial]['buildNumber']
+                    # when bug 839926 lands, buildNumber must be None for releases
+                    # but it might have a value for betas (beta *might* use
+                    # unreleased builds see bug 1091694 c2)
+                    if not verify_partial(platforms, product, partial,
+                                          build_number):
+                        test_success = False
+                        log.error("Error verifying partials")
 
     if test_success:
         if not options.dryrun:
