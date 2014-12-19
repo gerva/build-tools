@@ -30,16 +30,18 @@ from optparse import OptionParser
 from os import path
 from tempfile import mkdtemp
 from shutil import rmtree
+from copy import deepcopy
 
 site.addsitedir(path.join(path.dirname(__file__), "../lib/python"))
 
 from util.file import compare
 from util.hg import make_hg_url, mercurial, update
 from release.info import readReleaseConfig, getRepoMatchingBranch
+from release.paths import makeCandidatesDir, makeReleasesDir
 from release.versions import getL10nDashboardVersion
 from release.l10n import getShippedLocales
 from release.platforms import getLocaleListFromShippedLocales
-from release.sanity import check_buildbot, find_version, locale_diff, \
+from release.sanity import check_buildbot, locale_diff, \
     sendchange, verify_mozconfigs
 from util.retry import retry
 
@@ -234,6 +236,51 @@ def verify_options(cmd_options, config):
             log.error("masters json file is required when not skipping reconfig")
             success = False
             error_tally.add('masters_json_file')
+    return success
+
+
+def verify_partial(platforms, product, version, build, protocol='http',
+                   server='ftp.mozilla.org'):
+    """Checks if a partial exists"""
+    # by default check if partial exists in the releases directory
+    url = makeReleasesDir(product, version, protocol=protocol, server=server)
+    partial_name = "%s %s" % (product, version)
+    if build:
+        # unless build is specified then check the existence of this partial in
+        # the candidates directory
+        url = makeCandidatesDir(product, version, build,
+                                protocol=protocol, server=server)
+        partial_name = "%s %s build %s" % (product, version, build)
+
+
+    complete_mar_name = '%s-%s.complete.mar' % (product, version)
+    for platform in platforms:
+        print url
+        ftp_platform = buildbot2ftp(platform)
+        complete_mar_url = '%supdate/%s/en-US/%s' %(url,
+                ftp_platform, complete_mar_name)
+        log.info("Checking for existence of %s for partial update for platform %s..." %
+                (partial_name, platform))
+        if _verify_url(complete_mar_url):
+            log.info("complete mar: %s exists, url: %s" % (partial_name, complete_mar_url))
+        else:
+            log.error("Requested mar file, %s, does not exist for %s!"
+                      " Check again, or use -b to bypass" % (partial_name, platform))
+            error_tally.add('verify_partial')
+            return False
+
+    return True
+
+def _verify_url(url):
+    """simple functions that verifies if given a url exists.
+       Returns True if the url exists, False in any other case (HTTPError)
+    """
+    success = True
+    try:
+        urllib2.urlopen(url)
+    except urllib2.HTTPError:
+        log.error("Requested url: %s, does not exist!" % url)
+        success = False
     return success
 
 
@@ -480,6 +527,24 @@ if __name__ == '__main__':
                                    branchConfig['hghost']):
                     test_success = False
                     log.error("Error verifying repos")
+
+            # check partial updates
+            print releaseConfig.get('partialUpdates')
+            partials = deepcopy(releaseConfig.get('partialUpdates'))
+            if 'extraUpdates' in releaseConfig:
+                partials.extend(releaseConfig['extraUpdated'])
+            product = releaseConfig['productName']
+            branch = options.branch
+            platforms = releaseConfig['enUSPlatforms']
+            for partial in partials:
+                build_number = partials[partial]['buildNumber']
+                # when bug 839926 lands, buildNumber must be None for releases
+                # but it might have a value for betas (beta *might* use
+                # unreleased builds see bug 1091694 c2)
+                if not verify_partial(product, branch, partial,
+                                      build_number):
+                    test_success = False
+                    log.error("Error verifying partials")
 
     if test_success:
         if not options.dryrun:
