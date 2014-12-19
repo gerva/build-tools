@@ -530,7 +530,6 @@ if __name__ == '__main__':
                     log.error("Error verifying repos")
 
             # check partial updates
-            print releaseConfig.get('partialUpdates')
             partials = deepcopy(releaseConfig.get('partialUpdates'))
             if 'extraUpdates' in releaseConfig:
                 partials.extend(releaseConfig['extraUpdated'])
