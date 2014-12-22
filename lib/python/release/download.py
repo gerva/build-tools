@@ -1,6 +1,7 @@
 import os
 from os import path
 import urllib
+import socket
 from urllib import urlretrieve
 from urllib2 import urlopen, HTTPError
 
@@ -105,3 +106,24 @@ def rsyncFiles(files, server, userName, sshKey, target_dir):
            'ssh -l %s -oIdentityFile=%s' % (userName, sshKey),
            '-av'] + files + ['%s:%s' % (server, target_dir)]
     run_cmd(cmd)
+
+
+def url_exists(url, timeout=10):
+    """simple function that verifies if given a url exists.
+       Returns True if the url exists, False in any other case (HTTPError or
+       timeout)
+    Args:
+        url (str): url to check
+        timeout (int): timeout in seconds
+    Returns:
+        bool: True if url exists. False if the url does not exists (any http
+                error) or the operation does not complete in timeout seconds.
+    """
+    exists = True
+    try:
+        urlopen(url, timeout=timeout)
+    except (HTTPError, socket.timeout):
+        # socket.timeout is required for python > 2.7
+        # log.error("Requested url: %s, does not exist!" % url)
+        exists = False
+    return exists
