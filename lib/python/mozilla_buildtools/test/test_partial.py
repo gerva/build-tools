@@ -1,5 +1,5 @@
 import unittest
-from release.partial import Partial
+from release.partials import Partial
 from release.platforms import buildbot2ftp
 
 PRODUCTS = ('firefox', 'thunderbird')

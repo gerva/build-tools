@@ -41,7 +41,7 @@ from release.l10n import getShippedLocales
 from release.platforms import getLocaleListFromShippedLocales
 from release.sanity import check_buildbot, locale_diff, \
     sendchange, verify_mozconfigs
-from release.partial import Partial
+from release.partials import Partial
 from util.retry import retry
 
 log = logging.getLogger(__name__)
