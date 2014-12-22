@@ -11,7 +11,7 @@ SERVER = 'ftp.mozilla.org'
 
 class TestPartial(unittest.TestCase):
 
-    def test_partial_short_name(self):
+    def testPartialShortName(self):
         for product in PRODUCTS:
             buildNumber = 1
             p = Partial(product, VERSION, buildNumber, PROTOCOL, SERVER)
@@ -20,7 +20,7 @@ class TestPartial(unittest.TestCase):
             p = Partial(product, VERSION, buildNumber, PROTOCOL, SERVER)
             self.assertEqual(p.short_name(), '%s %s' % (product, VERSION))
 
-    def test_partial_is_from_candidates_dir(self):
+    def testPartialIsFromCandidates_dir(self):
         for product in PRODUCTS:
             buildNumber = 1
             p = Partial(product, VERSION, buildNumber, PROTOCOL, SERVER)
@@ -29,14 +29,14 @@ class TestPartial(unittest.TestCase):
             p = Partial(product, VERSION, buildNumber, PROTOCOL, SERVER)
             self.assertFalse(p._is_from_candidates_dir())
 
-    def test_partial_complete_mar_name(self):
+    def testPartialCompleteMarName(self):
         for product in PRODUCTS:
             buildNumber = 1
             p = Partial(product, VERSION, buildNumber, PROTOCOL, SERVER)
             complete_mar_ = '%s-%s.complete.mar' % (product, VERSION)
             self.assertEqual(complete_mar_, p.complete_mar_name())
 
-    def test_partial_complete_mar_url(self):
+    def testPartialCompleteMarUrl(self):
         for product in PRODUCTS:
             for platform in PLATFORMS:
                 buildNumber = 1
