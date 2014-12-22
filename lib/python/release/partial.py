@@ -5,10 +5,12 @@ from download import url_exists
 
 class Partial(object):
     """Models a partial update, used in release_sanity"""
-    def __init__(self, product, version, build_number):
+    def __init__(self, product, version, build_number, protocol, server):
         self.product = product
         self.version = version
         self.build_number = build_number
+        self.server = server
+        self.protocol = protocol
 
     def __str__(self):
         name = [self.product, self.version]
@@ -26,9 +28,12 @@ class Partial(object):
         ftp_platform = buildbot2ftp(platform)
         url = makeReleasesDir(self.product, self.version)
         if self._is_from_candidates_dir():
-            url = makeCandidatesDir(self.product,
-                                    self.version,
-                                    self.build_number)
+            url = makeCandidatesDir(product=self.product,
+                                    version=self.version,
+                                    buildNumber=self.build_number,
+                                    nightlyDir='candidates',
+                                    server=self.server,
+                                    protocol=self.protocol)
         return "/".join([url, 'update', ftp_platform,
                          'en-US', self.complete_mar_url()])
 
