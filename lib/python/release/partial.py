@@ -1,6 +1,6 @@
 from paths import makeCandidatesDir, makeReleasesDir
 from platforms import buildbot2ftp
-from downloads import url_exists
+from download import url_exists
 
 
 class Partial(object):
