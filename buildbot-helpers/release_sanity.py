@@ -30,20 +30,18 @@ from optparse import OptionParser
 from os import path
 from tempfile import mkdtemp
 from shutil import rmtree
-from copy import deepcopy
 
 site.addsitedir(path.join(path.dirname(__file__), "../lib/python"))
 
 from util.file import compare
 from util.hg import make_hg_url, mercurial, update
 from release.info import readReleaseConfig, getRepoMatchingBranch
-from release.paths import makeCandidatesDir, makeReleasesDir
-from release.platforms import buildbot2ftp
 from release.versions import getL10nDashboardVersion
 from release.l10n import getShippedLocales
 from release.platforms import getLocaleListFromShippedLocales
 from release.sanity import check_buildbot, locale_diff, \
     sendchange, verify_mozconfigs
+from release.partial import Partial
 from util.retry import retry
 
 log = logging.getLogger(__name__)
@@ -240,49 +238,26 @@ def verify_options(cmd_options, config):
     return success
 
 
-def verify_partial(platforms, product, version, build, protocol='http',
+def verify_partial(platforms, product, version, build_number, protocol='http',
                    server='ftp.mozilla.org'):
-    """Checks if a partial exists"""
-    # by default check if partial exists in the releases directory
-    url = makeReleasesDir(product, version, protocol=protocol, server=server)
-    partial_name = "%s %s" % (product, version)
-    if build:
-        # unless build is specified then check the existence of this partial in
-        # the candidates directory
-        url = makeCandidatesDir(product, version, build,
-                                protocol=protocol, server=server)
-        partial_name = "%s %s build %s" % (product, version, build)
 
-
-    complete_mar_name = '%s-%s.complete.mar' % (product, version)
+    partial = Partial(product, version, build_number, protocol, server)
+    log.info("Checking for existence of %s complete mar file..." % partial)
+    complete_mar_name = partial.complete_mar_name()
     for platform in platforms:
-        print url
-        ftp_platform = buildbot2ftp(platform)
-        complete_mar_url = '%supdate/%s/en-US/%s' %(url,
-                ftp_platform, complete_mar_name)
-        log.info("Checking for existence of %s for partial update for platform %s..." %
-                (partial_name, platform))
-        if _verify_url(complete_mar_url):
-            log.info("complete mar: %s exists, url: %s" % (partial_name, complete_mar_url))
+        log.info("Platform: %s" % platform)
+        complete_mar_url = partial.complete_mar_url(platform=platform)
+        if partial.exists(platform=platform):
+            log.info("complete mar: %s exists, url: %s" % (complete_mar_name,
+                                                           complete_mar_url))
         else:
-            log.error("Requested mar file, %s, does not exist for %s!"
-                      " Check again, or use -b to bypass" % (partial_name, platform))
+            log.error("Requested file, %s, does not exist on %s"
+                      " Check again, or use -b to bypass" % (complete_mar_name,
+                                                             complete_mar_url))
             error_tally.add('verify_partial')
             return False
 
     return True
-
-def _verify_url(url):
-    """simple functions that verifies if given a url exists.
-       Returns True if the url exists, False in any other case (HTTPError)
-    """
-    success = True
-    try:
-        urllib2.urlopen(url)
-    except urllib2.HTTPError:
-        log.error("Requested url: %s, does not exist!" % url)
-        success = False
-    return success
 
 
 if __name__ == '__main__':
@@ -530,7 +505,7 @@ if __name__ == '__main__':
                     log.error("Error verifying repos")
 
             # check partial updates
-            partials = deepcopy(releaseConfig.get('partialUpdates'))
+            partials = releaseConfig.get('partialUpdates')
             if 'extraUpdates' in releaseConfig:
                 partials.extend(releaseConfig['extraUpdated'])
             product = releaseConfig['productName']
