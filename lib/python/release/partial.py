@@ -14,8 +14,10 @@ class Partial(object):
 
     def __str__(self):
         name = [self.product, self.version]
+        # e.g. firefox 123.0b4
         if self.build_number is not None:
-            name.extend(['build', self.build_number])
+            name.extend(['build', int(self.build_number)])
+            # e.g. firefox 123.0b4 build 5
         return " ".join(name)
 
     def _is_from_candidates_dir(self):
